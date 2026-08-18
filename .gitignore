@@ -8,3 +8,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .idea/
+
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal

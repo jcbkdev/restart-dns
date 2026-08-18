@@ -1,4 +1,5 @@
 import dns2, { Packet } from "dns2";
+import { DomainRepository } from "./domain/domain.repository";
 
 const upstreamDNS = new dns2({
   nameServers: ["8.8.8.8"],
@@ -11,7 +12,7 @@ const server = dns2.createServer({
   udp: true,
 });
 
-const blockedUrls = new Set(["youtube.com"]);
+const domainRepository = DomainRepository.getInstance();
 
 server.on("request", async (request, send, rinfo) => {
   console.log(request.header.id, request.questions[0]);
@@ -19,7 +20,7 @@ server.on("request", async (request, send, rinfo) => {
 
   const [question] = request.questions;
   if (!question) return;
-  if (blockedUrls.has(question.name)) {
+  if (domainRepository.isBlocked(question.name)) {
     console.log(`[URL BLOCKED] ${question.name}`);
     response.answers.push({
       name: question.name,
