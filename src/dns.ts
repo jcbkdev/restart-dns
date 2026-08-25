@@ -26,7 +26,7 @@ server.on("request", async (request, send, rinfo) => {
       name: question.name,
       type: question.type,
       class: question.class,
-      ttl: 300,
+      ttl: 5,
       address: "0.0.0.0",
     } as any);
   } else {
@@ -38,6 +38,9 @@ server.on("request", async (request, send, rinfo) => {
     const realResponse = await upstreamDNS.resolve(question.name, typeString);
 
     response.answers = realResponse.answers;
+    for (let answer of response.answers) {
+      answer.ttl = 5;
+    }
     response.authorities = realResponse.authorities || [];
     response.additionals = realResponse.additionals || [];
   }
