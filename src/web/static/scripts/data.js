@@ -55,7 +55,7 @@ function createDomainItemElement(domain) {
 }
 
 async function loadDomains(domains) {
-  const blockedDomainsList = document.getElementById("blockedDomains");
+  const blockedDomainsList = document.getElementById("blockedDomainsList");
   if (!blockedDomainsList) return;
 
   blockedDomainsList.innerHTML = "";

@@ -4,13 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <link rel="stylesheet" href="/static/css/global.css" />
     <script src="/static/scripts/data.js" defer></script>
   </head>
   <body>
-    <form id="domainForm">
-      <input id="domain" name="domain" type="text" />
-      <button type="submit">Add</button>
-    </form>
-    <ul id="blockedDomains"></ul>
+    <main>
+      <form id="domainForm">
+        <label for="urlInput">Url to block</label>
+        <div class="url-input-wrapper">
+          <input
+            id="domain"
+            name="domain"
+            type="text"
+            placeholder="example.com or *.example.com/*"
+          />
+          <button type="submit">Add</button>
+        </div>
+      </form>
+      <ul id="blockedDomainsList"></ul>
+    </main>
   </body>
 </html>
