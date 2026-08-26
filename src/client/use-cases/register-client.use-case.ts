@@ -24,7 +24,7 @@ export function RegisterClientUseCase(
     return Result.success(client);
   }
 
-  const client = new Client(ip, 15);
+  const client = new Client(ip);
 
   const addClientResult = clientRepository.addClient(client);
 
