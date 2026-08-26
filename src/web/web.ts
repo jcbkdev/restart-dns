@@ -1,10 +1,16 @@
 import express, { type Express, type Request, type Response } from "express";
+import cors from "cors";
 import path from "node:path";
 import { fileURLToPath } from "url";
 import domainRouter from "../domain/domain.routes";
 import clientRouter from "../client/client.routes";
 
 const server: Express = express();
+server.use(
+  cors({
+    origin: /^chrome-extension:\/\//,
+  }),
+);
 server.use(express.json());
 
 const __filename = fileURLToPath(import.meta.url);
