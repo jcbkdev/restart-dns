@@ -1,5 +1,7 @@
 import dns2, { Packet } from "dns2";
 import { DomainRepository } from "./domain/domain.repository";
+import { CONSTANTS } from "./constants";
+import { getLocalIp } from "./utils/network";
 
 const upstreamDNS = new dns2({
   nameServers: ["8.8.8.8"],
@@ -20,6 +22,20 @@ server.on("request", async (request, send, rinfo) => {
 
   const [question] = request.questions;
   if (!question) return;
+
+  if (question.name === CONSTANTS.HOSTNAME) {
+    console.log(`[INTERNAL URL] ${question.name}`);
+    response.answers.push({
+      name: question.name,
+      type: question.type,
+      class: question.class,
+      ttl: 30,
+      address: getLocalIp(),
+    } as any);
+    send(response);
+    return;
+  }
+
   if (domainRepository.isBlocked(question.name)) {
     console.log(`[URL BLOCKED] ${question.name}`);
     response.answers.push({
