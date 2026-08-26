@@ -17,11 +17,9 @@ export function RegisterClientUseCase(
 
     const renewClientResult = client.renew();
 
-    if (renewClientResult.isFailure()) {
-      return Result.error(renewClientResult.getError()!);
+    if (renewClientResult.isSuccess()) {
+      return Result.success(client);
     }
-
-    return Result.success(client);
   }
 
   const client = new Client(ip);
