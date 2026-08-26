@@ -18,16 +18,20 @@ export function getClientIp(
   source: RemoteInfo | Socket | IncomingMessage,
 ): Result<string> {
   if ("address" in source && typeof source.address === "string") {
-    return Result.success(source.address);
+    return Result.success(normalizeIp(source.address));
   }
 
   if ("remoteAddress" in source && typeof source.remoteAddress === "string") {
-    return Result.success(source.remoteAddress);
+    return Result.success(normalizeIp(source.remoteAddress));
   }
 
   if ("socket" in source && source.socket?.remoteAddress) {
-    return Result.success(source.socket.remoteAddress);
+    return Result.success(normalizeIp(source.socket.remoteAddress));
   }
 
   return Result.error(new Error("Unable to determine client IP"));
+}
+
+export function normalizeIp(ip: string): string {
+  return ip.startsWith("::ffff:") ? ip.slice(7) : ip;
 }

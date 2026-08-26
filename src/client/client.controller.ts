@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import type { ClientRepository } from "./client.repository";
 import { Client } from "./client.entity";
 import { RegisterClientUseCase } from "./use-cases/register-client.use-case";
+import { normalizeIp } from "../utils/network";
 
 export class ClientController {
   private clientRepository: ClientRepository;
@@ -15,7 +16,10 @@ export class ClientController {
       return res.sendStatus(400);
     }
 
-    const result = RegisterClientUseCase(this.clientRepository, req.ip);
+    const result = RegisterClientUseCase(
+      this.clientRepository,
+      normalizeIp(req.ip),
+    );
 
     if (result.isFailure()) {
       return res.status(409).send(result.getError()!.message);

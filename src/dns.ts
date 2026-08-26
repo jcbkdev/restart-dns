@@ -1,7 +1,8 @@
 import dns2, { Packet } from "dns2";
 import { DomainRepository } from "./domain/domain.repository";
 import { CONSTANTS } from "./constants";
-import { getLocalIp } from "./utils/network";
+import { getClientIp, getLocalIp } from "./utils/network";
+import { ClientRepository } from "./client/client.repository";
 
 const upstreamDNS = new dns2({
   nameServers: ["8.8.8.8"],
@@ -23,43 +24,52 @@ server.on("request", async (request, send, rinfo) => {
   const [question] = request.questions;
   if (!question) return;
 
-  if (question.name === CONSTANTS.HOSTNAME) {
-    console.log(`[INTERNAL URL] ${question.name}`);
-    response.answers.push({
-      name: question.name,
-      type: question.type,
-      class: question.class,
-      ttl: 30,
-      address: getLocalIp(),
-    } as any);
-    send(response);
-    return;
-  }
+  const clientIp = getClientIp(rinfo);
+  const clientRepository = ClientRepository.getInstance();
 
-  if (domainRepository.isBlocked(question.name)) {
-    console.log(`[URL BLOCKED] ${question.name}`);
-    response.answers.push({
-      name: question.name,
-      type: question.type,
-      class: question.class,
-      ttl: 5,
-      address: "0.0.0.0",
-    } as any);
-  } else {
-    const typeString =
-      Object.keys(dns2.Packet.TYPE).find(
-        (key) => (dns2.Packet.TYPE as any)[key] === question.type,
-      ) || "A";
-
-    const realResponse = await upstreamDNS.resolve(question.name, typeString);
-
-    response.answers = realResponse.answers;
-    for (let answer of response.answers) {
-      answer.ttl = 5;
+  if (
+    clientIp.isSuccess() &&
+    clientRepository.hasClient(clientIp.getValue()!)
+  ) {
+    if (question.name === CONSTANTS.HOSTNAME) {
+      console.log(`[INTERNAL URL] ${question.name}`);
+      response.answers.push({
+        name: question.name,
+        type: question.type,
+        class: question.class,
+        ttl: 30,
+        address: getLocalIp(),
+      } as any);
+      send(response);
+      return;
     }
-    response.authorities = realResponse.authorities || [];
-    response.additionals = realResponse.additionals || [];
+
+    if (domainRepository.isBlocked(question.name)) {
+      console.log(`[URL BLOCKED] ${question.name}`);
+      response.answers.push({
+        name: question.name,
+        type: question.type,
+        class: question.class,
+        ttl: 5,
+        address: "0.0.0.0",
+      } as any);
+      send(response);
+      return;
+    }
   }
+  const typeString =
+    Object.keys(dns2.Packet.TYPE).find(
+      (key) => (dns2.Packet.TYPE as any)[key] === question.type,
+    ) || "A";
+
+  const realResponse = await upstreamDNS.resolve(question.name, typeString);
+
+  response.answers = realResponse.answers;
+  for (let answer of response.answers) {
+    answer.ttl = 5;
+  }
+  response.authorities = realResponse.authorities || [];
+  response.additionals = realResponse.additionals || [];
 
   send(response);
 });
@@ -82,11 +92,11 @@ export const DNS = {
       await server.listen({
         udp: {
           port: port,
-          address: "127.0.0.1",
+          address: "0.0.0.0",
         },
         tcp: {
           port: port,
-          address: "127.0.0.1",
+          address: "0.0.0.0",
         },
       });
     } catch (err) {
