@@ -24,6 +24,19 @@ server.on("request", async (request, send, rinfo) => {
   const [question] = request.questions;
   if (!question) return;
 
+  if (question.name === CONSTANTS.HOSTNAME) {
+    console.log(`[INTERNAL URL] ${question.name}`);
+    response.answers.push({
+      name: question.name,
+      type: question.type,
+      class: question.class,
+      ttl: 30,
+      address: getLocalIp(),
+    } as any);
+    send(response);
+    return;
+  }
+
   const clientIp = getClientIp(rinfo);
   const clientRepository = ClientRepository.getInstance();
 
@@ -31,19 +44,6 @@ server.on("request", async (request, send, rinfo) => {
     clientIp.isSuccess() &&
     clientRepository.hasClient(clientIp.getValue()!)
   ) {
-    if (question.name === CONSTANTS.HOSTNAME) {
-      console.log(`[INTERNAL URL] ${question.name}`);
-      response.answers.push({
-        name: question.name,
-        type: question.type,
-        class: question.class,
-        ttl: 30,
-        address: getLocalIp(),
-      } as any);
-      send(response);
-      return;
-    }
-
     if (domainRepository.isBlocked(question.name)) {
       console.log(`[URL BLOCKED] ${question.name}`);
       response.answers.push({
