@@ -2,6 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import path from "node:path";
 import { fileURLToPath } from "url";
 import domainRouter from "../domain/domain.routes";
+import clientRouter from "../client/client.routes";
 
 const server: Express = express();
 server.use(express.json());
@@ -12,6 +13,8 @@ const __dirname = path.dirname(__filename);
 server.use("/static", express.static(path.join(__dirname, "static")));
 
 server.use("/domain", domainRouter);
+
+server.use("/client", clientRouter);
 
 server.get("/", (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, "views", "index.html"));
