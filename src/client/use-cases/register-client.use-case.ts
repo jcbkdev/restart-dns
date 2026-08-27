@@ -1,5 +1,7 @@
 import { Result } from "../../shared/result";
 import { Client } from "../client.entity";
+import { CONSTANTS } from "../../constants";
+
 import type { ClientRepository } from "../client.repository";
 
 export function RegisterClientUseCase(
@@ -22,7 +24,7 @@ export function RegisterClientUseCase(
     }
   }
 
-  const client = new Client(ip);
+  const client = new Client(ip, CONSTANTS.CLIENT_TTL_SECONDS);
 
   const addClientResult = clientRepository.addClient(client);
 
