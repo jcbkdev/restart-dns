@@ -18,60 +18,64 @@ const server = dns2.createServer({
 const domainRepository = DomainRepository.getInstance();
 
 server.on("request", async (request, send, rinfo) => {
-  console.log(request.header.id, request.questions[0]);
-  let response = Packet.createResponseFromRequest(request);
+  try {
+    console.log(request.header.id, request.questions[0]);
+    let response = Packet.createResponseFromRequest(request);
 
-  const [question] = request.questions;
-  if (!question) return;
+    const [question] = request.questions;
+    if (!question) return;
 
-  if (question.name === CONSTANTS.HOSTNAME) {
-    console.log(`[INTERNAL URL] ${question.name}`);
-    response.answers.push({
-      name: question.name,
-      type: question.type,
-      class: question.class,
-      ttl: 30,
-      address: getLocalIp(),
-    } as any);
-    send(response);
-    return;
-  }
-
-  const clientIp = getClientIp(rinfo);
-  const clientRepository = ClientRepository.getInstance();
-
-  if (
-    clientIp.isSuccess() &&
-    clientRepository.hasClient(clientIp.getValue()!)
-  ) {
-    if (domainRepository.isBlocked(question.name)) {
-      console.log(`[URL BLOCKED] ${question.name}`);
+    if (question.name === CONSTANTS.HOSTNAME) {
+      console.log(`[INTERNAL URL] ${question.name}`);
       response.answers.push({
         name: question.name,
         type: question.type,
         class: question.class,
-        ttl: 5,
-        address: "0.0.0.0",
+        ttl: 30,
+        address: getLocalIp(),
       } as any);
       send(response);
       return;
     }
+
+    const clientIp = getClientIp(rinfo);
+    const clientRepository = ClientRepository.getInstance();
+
+    if (
+      clientIp.isSuccess() &&
+      clientRepository.hasClient(clientIp.getValue()!)
+    ) {
+      if (domainRepository.isBlocked(question.name)) {
+        console.log(`[URL BLOCKED] ${question.name}`);
+        response.answers.push({
+          name: question.name,
+          type: question.type,
+          class: question.class,
+          ttl: 5,
+          address: "0.0.0.0",
+        } as any);
+        send(response);
+        return;
+      }
+    }
+    const typeString =
+      Object.keys(dns2.Packet.TYPE).find(
+        (key) => (dns2.Packet.TYPE as any)[key] === question.type,
+      ) || "A";
+
+    const realResponse = await upstreamDNS.resolve(question.name, typeString);
+
+    response.answers = realResponse.answers;
+    for (let answer of response.answers) {
+      answer.ttl = 5;
+    }
+    response.authorities = realResponse.authorities || [];
+    response.additionals = realResponse.additionals || [];
+
+    send(response);
+  } catch (err) {
+    console.error(err);
   }
-  const typeString =
-    Object.keys(dns2.Packet.TYPE).find(
-      (key) => (dns2.Packet.TYPE as any)[key] === question.type,
-    ) || "A";
-
-  const realResponse = await upstreamDNS.resolve(question.name, typeString);
-
-  response.answers = realResponse.answers;
-  for (let answer of response.answers) {
-    answer.ttl = 5;
-  }
-  response.authorities = realResponse.authorities || [];
-  response.additionals = realResponse.additionals || [];
-
-  send(response);
 });
 
 server.on("requestError", (error) => {
