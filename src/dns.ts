@@ -27,13 +27,15 @@ server.on("request", async (request, send, rinfo) => {
 
     if (question.name === CONSTANTS.HOSTNAME) {
       console.log(`[INTERNAL URL] ${question.name}`);
-      response.answers.push({
-        name: question.name,
-        type: question.type,
-        class: question.class,
-        ttl: 30,
-        address: getLocalIp(),
-      } as any);
+      if (question.type === Packet.TYPE.A) {
+        response.answers.push({
+          name: question.name,
+          type: Packet.TYPE.A,
+          class: question.class,
+          ttl: 30,
+          address: getLocalIp(),
+        } as any);
+      }
       send(response);
       return;
     }
