@@ -27,10 +27,8 @@ export class ClientController {
 
     const client = result.getValue() as Client;
 
-    return res.status(200).json(
-      JSON.stringify({
-        expirationDate: client.expirationDate,
-      }),
-    );
+    return res.status(200).json({
+      expirationDate: client.expirationDate,
+    });
   };
 }
